@@ -3,16 +3,30 @@
 module Main where
 
 import Data.List
-import Erlangesque (Action, Message (Kill, Relay, StrMsg), newContext, pushMessageToWorkerById, spawn)
+import Erlangesque (Action, newContext, post, spawn)
 
-myErlangStyleAction :: Action
+data Message = Kill | StrMsg String | Relay Int Message
+
+data DifferentMessageSet = KillDiff | IntMsg Int
+
+term :: IO ()
+term = putStrLn "Process Terminated!"
+
+diffAction :: Action DifferentMessageSet
+diffAction (!) rcv = go 0
+  where
+    go n =
+      rcv >>= \case
+        KillDiff -> term
+        IntMsg x -> print (n+x) >> go (n+x)
+
+myErlangStyleAction :: Action Message
 myErlangStyleAction (!) rcv = go []
   where
     go l = do
       msg <- rcv
       case msg of
-        Kill ->
-          putStrLn "Process Terminated!"
+        Kill -> do term
         StrMsg "all" -> do
           putStr (intercalate ", " l)
           putStrLn ";"
@@ -21,7 +35,7 @@ myErlangStyleAction (!) rcv = go []
           putStrLn s
           go (s : l)
 
-relayAction :: Action
+relayAction :: Action Message
 relayAction (!) rcv = go
   where
     go =
@@ -40,7 +54,7 @@ main :: IO ()
 main = do
   putStrLn "Hello, Haskell!"
   ctx <- newContext
-  let (!) = pushMessageToWorkerById ctx
+  let (!) = post ctx
   spawn ctx myErlangStyleAction 0
   0 ! StrMsg "Hi"
   0 ! StrMsg "1 2 3"
@@ -53,4 +67,13 @@ main = do
   spawn ctx relayAction 2
   2 ! Relay 1 (Relay 0 (StrMsg "Message to relay twice"))
 
-  putStrLn =<< readLn -- only here as a hack to force wait for Worker processes
+  diffCtx <- newContext
+  let (!%) = post diffCtx
+  spawn diffCtx diffAction 0
+  0 !% IntMsg 2
+  0 !% IntMsg 1
+  0 !% IntMsg 3
+
+  
+
+  putStrLn =<< getLine -- only here as a hack to force wait for Worker processes
