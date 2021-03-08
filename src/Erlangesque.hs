@@ -1,3 +1,4 @@
+{-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE LambdaCase #-}
 
 -- | A basic implementation of the Actor Model in Haskell
@@ -19,6 +20,28 @@ type Id = Int
 type Name = String
 
 type Send a = Id -> a -> IO ()
+
+type NodeId = Id
+
+data CompositeAddress = CompositeAddress Id NodeId
+(@@) :: Id -> NodeId -> CompositeAddress
+(@@) = CompositeAddress
+
+
+instance Address CompositeAddress where
+  getId (CompositeAddress id _) = id
+  getNodeId (CompositeAddress _ nodeId) = Just nodeId 
+
+class Address a where -- May be Id, or may be complex remote or local
+  getId :: a -> Id
+  getNodeId :: a -> Maybe NodeId
+  getNodeId _ = Nothing
+
+instance Address Int where
+  getId = id
+
+instance Address String where
+  getId = read
 
 type Action a = Send a -> Receive a -> IO ()
 
@@ -44,8 +67,8 @@ pushMessageToWorkerById ctx id msg =
     Just w -> pushMessageToWorker w msg
     Nothing -> putStrLn "No such worker exists"
 
-post :: Context a -> Id -> a -> IO ()
-post = pushMessageToWorkerById
+post :: Address b => Context a -> b -> a -> IO ()
+post ctx addr = pushMessageToWorkerById ctx (getId addr)
 
 spawn :: Context a -> Action a -> Id -> IO ()
 spawn ctx a id =
@@ -117,8 +140,7 @@ example = do
   -- Create a new context
   ctx <- newContext
   -- Allow usage of infix !, Erlang Style
-  let (!) = post ctx
-
+  let (!) = post ctx :: Int -> ExampleMessage -> IO ()
   -- Spawn a new process with id 0
   spawn ctx exampleAction 0
   -- Send some messages to it
@@ -128,7 +150,7 @@ example = do
 
   -- Spawn another process
   spawn ctx exampleAction 1
-  
+
   -- Send a message to process 0, via process 1
   1 ! Relay 0 (StrMsg "Message to relay")
 
@@ -137,5 +159,5 @@ example = do
   -- Can nest relays
   2 ! Relay 1 (Relay 0 (StrMsg "Message to relay twice"))
 
---Need to wait for Workers to finish. The following (kinda) works as a hack:
+  --Need to wait for Workers to finish. The following (kinda) works as a hack:
   print =<< getLine

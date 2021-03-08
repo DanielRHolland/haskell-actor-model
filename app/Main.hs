@@ -3,7 +3,7 @@
 module Main where
 
 import Data.List
-import Erlangesque (Action, newContext, post, spawn)
+import Erlangesque (Address, Action, newContext, post, spawn)
 
 data Message = Kill | StrMsg String | Relay Int Message
 
@@ -55,11 +55,15 @@ main = do
   putStrLn "Hello, Haskell!"
   ctx <- newContext
   let (!) = post ctx
-  spawn ctx myErlangStyleAction 0
-  0 ! StrMsg "Hi"
-  0 ! StrMsg "1 2 3"
-  0 ! StrMsg "Bye"
-  0 ! StrMsg "all"
+  let w0 = 0 :: Int
+  spawn ctx myErlangStyleAction w0
+  w0 ! StrMsg "Hi"
+  w0 ! StrMsg "1 2 3"
+  w0 ! StrMsg "Bye"
+  w0 ! StrMsg "all"
+
+  post ctx "0" (StrMsg "Using string address")
+  post ctx (0::Int) (StrMsg "Using int address")
 
   spawn ctx relayAction 1
   1 ! Relay 0 (StrMsg "Message to relay")
@@ -69,10 +73,11 @@ main = do
 
   diffCtx <- newContext
   let (!%) = post diffCtx
+  let c1w0 = 0 :: Int -- Can share ids, as Context is different
   spawn diffCtx diffAction 0
-  0 !% IntMsg 2
-  0 !% IntMsg 1
-  0 !% IntMsg 3
+  c1w0 !% IntMsg 2
+  c1w0 !% IntMsg 1
+  c1w0 !% IntMsg 3
 
   
 
