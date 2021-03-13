@@ -12,11 +12,8 @@ import Erlangesque (initCtx, Action, Id)
 data ExampleMessage = Kill | StrMsg String | Relay Id ExampleMessage
 
 -- | 2. Implement an Action function for the message type.
---      The state of the process should be held in the parameter
---      of the inner function, which is passed back into itself,
---      with any changes.
 --      (!) allows for Erlang-Style message sending
---      rcv provides the next message in the inbox
+--      rcv pops the next message from the inbox
 simpleAction :: Action ExampleMessage
 simpleAction (!) rcv = go
   where
@@ -24,14 +21,19 @@ simpleAction (!) rcv = go
       rcv >>= \case
         StrMsg s -> do
           putStrLn s                            -- Do something
-          go                                    -- Tail-call `go` to keep process alive 
-        _ -> putStrLn "Process Terminated"      -- To kill it, simply don't call go again
+          go                                    -- Tail-call `go` to keep process alive
+        _ -> putStrLn "Process Terminated"      -- To kill it, don't call go again
 
 
 -- | 2a A slightly more sophisticated action, with a counter to
 --      demonstrate how to maintain a state within a process,
 --      and an implementation of the `Relay` option, showing
 --      how to message other processes.
+--
+--      The state of the process is held in the parameter of the
+--      inner function, which is passed back into itself, with
+--      any changes.
+--
 relayingAction :: Action ExampleMessage
 relayingAction (!) rcv = go 0
   where
