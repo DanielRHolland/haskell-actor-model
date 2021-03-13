@@ -2,25 +2,16 @@ cabal-version:      2.4
 name:               hsmsgs
 version:            0.1.0.0
 
--- A short (one-line) description of the package.
--- synopsis:
+synopsis: A basic implementation of the Actor Model in Haskell
 
--- A longer description of the package.
--- description:
+description: Not a very idiomatic way to programme concurrently in Haskell. A basic implementation of an Erlang-style Actor Model.
 
--- A URL where users can report bugs.
--- bug-reports:
 
--- The license under which the package is released.
--- license:
 author:             dan
 maintainer:         me@danrh.co.uk
 
--- A copyright notice.
--- copyright:
--- category:
-extra-source-files: CHANGELOG.md
-
+license-file: LICENCE
+ 
 library
     exposed-modules:  Erlangesque
 
@@ -28,22 +19,19 @@ library
     -- other-modules:
 
     -- LANGUAGE extensions used by modules in this package.
-    -- other-extensions:
+    other-extensions: LambdaCase
     build-depends:    base ^>=4.14.1.0, stm, containers
     hs-source-dirs:   src
     default-language: Haskell2010
 
+
+
 executable hsmsgs
     main-is:          Main.hs
 
-    -- Modules included in this executable, other than Main.
-    -- other-modules:
-
-    -- LANGUAGE extensions used by modules in this package.
-    -- other-extensions:
-    build-depends:
-        base ^>=4.14.1.0,
-        hsmsgs
+    other-extensions: LambdaCase
+    build-depends:    base ^>=4.14.1.0,
+                      hsmsgs
 
     hs-source-dirs:   app
     default-language: Haskell2010
