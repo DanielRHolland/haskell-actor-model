@@ -22,7 +22,7 @@ simpleAction (!) rcv = go
         StrMsg s -> do
           putStrLn s                            -- Do something
           go                                    -- Tail-call `go` to keep process alive
-        _ -> putStrLn "Process Terminated"      -- To kill it, don't call go again
+        _ -> putStrLn "Process Terminated"      -- To kill it, don't call `go` again
 
 
 -- | 2a A slightly more sophisticated action, with a counter to
